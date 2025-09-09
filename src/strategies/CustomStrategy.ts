@@ -90,6 +90,34 @@ export class CustomStrategy implements ScheduleStrategy {
     return true;
   }
   
+  getNextScheduleTime(currentTime: Date): Date | null {
+    const nextTime = new Date(currentTime.getTime() + this.intervalMinutes * 60 * 1000);
+    
+    let attempts = 0;
+    const maxAttempts = 14;
+    
+    while (attempts < maxAttempts) {
+      const nextHour = nextTime.getHours();
+      const nextWeekday = nextTime.getDay();
+      
+      if (this.isWorkingHour(nextHour) && this.weekdays.includes(nextWeekday)) {
+        return nextTime;
+      }
+      
+      if (!this.isWorkingHour(nextHour)) {
+        const adjustedTime = this.getNextWorkingHourStart(nextTime);
+        nextTime.setTime(adjustedTime.getTime());
+      } else if (!this.weekdays.includes(nextWeekday)) {
+        nextTime.setDate(nextTime.getDate() + 1);
+        nextTime.setHours(this.startHour, 0, 0, 0);
+      }
+      
+      attempts++;
+    }
+    
+    return null;
+  }
+  
   private isWorkingHour(hour: number): boolean {
     // 处理完整小时格式，如9:00-18:00
     // startHour=9, endHour=18 表示 9:00 到 18:00（不包含18:00）

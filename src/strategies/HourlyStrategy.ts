@@ -44,4 +44,8 @@ export class HourlyStrategy implements ScheduleStrategy {
   shouldExecuteTask(_task: ScheduleTask): boolean {
     return true;
   }
+  
+  getNextScheduleTime(currentTime: Date): Date | null {
+    return new Date(currentTime.getTime() + this.intervalMinutes * 60 * 1000);
+  }
 }

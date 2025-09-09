@@ -103,13 +103,33 @@ export class TaskScheduler {
   private scheduleNextHourTasks(): void {
     const now = new Date();
     
-    // 只清除过期的任务，保留未来的任务
+    // 清理过期的任务
     const cutoffTime = new Date(now.getTime() - 5 * 60 * 1000); // 5分钟前
     this.scheduledTasks = this.scheduledTasks.filter(task => task.scheduledTime > cutoffTime);
+    
+    // 计算下一个调度周期的时间
+    const nextScheduleTime = this.strategy.getNextScheduleTime(now);
+    if (!nextScheduleTime) {
+      console.log('[SCHEDULER] No valid next schedule time found');
+      return;
+    }
+    
+    // 检查是否已为此调度周期创建任务（10分钟时间窗口）
+    const tasksForSameSchedule = this.scheduledTasks.filter(task => {
+      const timeDiff = Math.abs(task.scheduledTime.getTime() - nextScheduleTime.getTime());
+      return timeDiff <= 10 * 60 * 1000; // 10分钟内认为是同一调度周期
+    });
+    
+    if (tasksForSameSchedule.length > 0) {
+      console.log(`[SCHEDULER] Tasks already scheduled for ${nextScheduleTime.toLocaleString()}, skipping (existing: ${tasksForSameSchedule.length})`);
+      return;
+    }
     
     // 使用策略生成新任务
     const newTasks = this.strategy.scheduleNextHourTasks(this.agents, this.scheduledTasks);
     this.scheduledTasks.push(...newTasks);
+    
+    console.log(`[SCHEDULER] Created ${newTasks.length} new tasks for ${nextScheduleTime.toLocaleString()}`);
   }
   
   private async checkAndExecuteTasks(): Promise<void> {

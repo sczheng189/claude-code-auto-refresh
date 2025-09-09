@@ -17,14 +17,16 @@ async function main() {
     
     console.log('Agent is running. Press Ctrl+C to stop.');
     
-    // 每30分钟输出一次当前调度状态
+    // 每2小时输出一次当前调度状态，减少日志冗余
     setInterval(() => {
       const tasks = scheduler.getScheduledTasks();
-      console.log(`Current scheduled tasks: ${tasks.length}`);
-      tasks.forEach(task => {
-        console.log(`- ${task.groupId}: ${task.scheduledTime.toLocaleString()}`);
-      });
-    }, 30 * 60 * 1000);
+      console.log(`[MONITOR] Scheduled tasks: ${tasks.length}`);
+      if (tasks.length > 0) {
+        tasks.forEach(task => {
+          console.log(`  - ${task.groupId}: ${task.scheduledTime.toLocaleString()}`);
+        });
+      }
+    }, 2 * 60 * 60 * 1000);
     
     // 保持进程运行
     process.on('SIGINT', () => {
